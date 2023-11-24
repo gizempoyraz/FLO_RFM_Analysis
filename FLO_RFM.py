@@ -1,101 +1,86 @@
 ###############################################################
-# RFM ile Müşteri Segmentasyonu (Customer Segmentation with RFM)
+# (Customer Segmentation with RFM)
 ###############################################################
 
 ###############################################################
-# İş Problemi (Business Problem)
+# (Business Problem)
 ###############################################################
-# FLO müşterilerini segmentlere ayırıp bu segmentlere göre pazarlama stratejileri belirlemek istiyor.
-# Buna yönelik olarak müşterilerin davranışları tanımlanacak ve bu davranış öbeklenmelerine göre gruplar oluşturulacak..
+# FLO wants to divide its customers into segments and determine marketing strategies according to these segments.
+# Towards this end, customers' behaviors will be defined and groups will be created based on these behavioral clusters.
 
 ###############################################################
-# Veri Seti Hikayesi
+# Dataset Story
 ###############################################################
 
-# Veri seti son alışverişlerini 2020 - 2021 yıllarında OmniChannel(hem online hem offline alışveriş yapan) olarak yapan müşterilerin geçmiş alışveriş davranışlarından
-# elde edilen bilgilerden oluşmaktadır.
+# The data set is based on the past shopping behavior of customers who made their last purchases via OmniChannel (both online and offline shopping) in 2020 - 2021.
+# consists of the information obtained.
 
-# master_id: Eşsiz müşteri numarası
-# order_channel : Alışveriş yapılan platforma ait hangi kanalın kullanıldığı (Android, ios, Desktop, Mobile, Offline)
-# last_order_channel : En son alışverişin yapıldığı kanal
-# first_order_date : Müşterinin yaptığı ilk alışveriş tarihi
-# last_order_date : Müşterinin yaptığı son alışveriş tarihi
-# last_order_date_online : Muşterinin online platformda yaptığı son alışveriş tarihi
-# last_order_date_offline : Muşterinin offline platformda yaptığı son alışveriş tarihi
-# order_num_total_ever_online : Müşterinin online platformda yaptığı toplam alışveriş sayısı
-# order_num_total_ever_offline : Müşterinin offline'da yaptığı toplam alışveriş sayısı
-# customer_value_total_ever_offline : Müşterinin offline alışverişlerinde ödediği toplam ücret
-# customer_value_total_ever_online : Müşterinin online alışverişlerinde ödediği toplam ücret
-# interested_in_categories_12 : Müşterinin son 12 ayda alışveriş yaptığı kategorilerin listesi
+# master_id: Unique customer number
+# order_channel: Which channel of the shopping platform is used (Android, iOS, Desktop, Mobile, Offline)
+# last_order_channel : The channel where the last purchase was made
+#first_order_date: The date of the customer's first purchase
+# last_order_date : The last shopping date of the customer
+# last_order_date_online : The last shopping date of the customer on the online platform
+# last_order_date_offline : The last shopping date of the customer on the offline platform
+# order_num_total_ever_online : Total number of purchases made by the customer on the online platform
+# order_num_total_ever_offline : Total number of purchases made by the customer offline
+# customer_value_total_ever_offline : The total price paid by the customer for offline purchases
+# customer_value_total_ever_online : The total price paid by the customer for online purchases
+# interested_in_categories_12 : List of categories the customer has shopped in the last 12 months
 
 
-# GÖREV 1: Veriyi Anlama (Data Understanding) ve Hazırlama
-# 1. flo_data_20K.csv verisini okuyunuz.
-# 2. Veri setinde
-# a. İlk 10 gözlem,
-# b. Değişken isimleri,
-# c. Betimsel istatistik,
-# d. Boş değer,
-# e. Değişken tipleri, incelemesi yapınız.
-# 3. Omnichannel müşterilerin hem online'dan hemde offline platformlardan alışveriş yaptığını ifade etmektedir. Herbir müşterinin toplam
-# alışveriş sayısı ve harcaması için yeni değişkenler oluşturun.
-# 4. Değişken tiplerini inceleyiniz. Tarih ifade eden değişkenlerin tipini date'e çeviriniz.
-# 5. Alışveriş kanallarındaki müşteri sayısının, ortalama alınan ürün sayısının ve ortalama harcamaların dağılımına bakınız.
-# 6. En fazla kazancı getiren ilk 10 müşteriyi sıralayınız.
-# 7. En fazla siparişi veren ilk 10 müşteriyi sıralayınız.
-# 8. Veri ön hazırlık sürecini fonksiyonlaştırınız.
-
-# 1. flo_data_20K.csv verisini okuyunuz.
+# reading flo_data_20K.csv data
 import pandas as pd
 import datetime as dt
 
 df_ = pd.read_csv("datasets\flo_data_20k.csv")
 df = df_.copy()
 
-# a. İlk 10 gözlem,
+#Top 10 observations
 df.head(10)
 
-# b. Değişken isimleri
+#Variable names
 df.columns
 
-# c. Betimsel istatistik
+#Descriptive statistics
 df.describe().T
 
-# d. Boş değer
+#Null value
 df.isnull().sum()
 df.isnull().sum().any()
 
-# e. Değişken tipleri, incelemesi yapınız.
+#Variable types, review
 df.info()
 
-# 3. Omnichannel müşterilerin hem online'dan hemde offline platformlardan alışveriş yaptığını ifade etmektedir. Herbir müşterinin toplam
-# alışveriş sayısı ve harcaması için yeni değişkenler oluşturun.
+#3. Omnichannel means that customers shop both online and offline platforms. Total for each customer
+# new variables created for number of purchases and spending
+
 df["total_order_num"] = df["order_num_total_ever_offline"] + df["order_num_total_ever_online"]
 df["total_value_online"] = df["customer_value_total_ever_online"] + df["customer_value_total_ever_online"]
 df["total_value_offline"] = df["customer_value_total_ever_offline"] + df["customer_value_total_ever_offline"]
 df["total_value"] = df["customer_value_total_ever_offline"] + df["customer_value_total_ever_online"]
 df.info()
 
-# 4. Değişken tiplerini inceleyiniz. Tarih ifade eden değişkenlerin tipini date'e çeviriniz.
+#Variable types were examined. The type of variables expressing date was changed to date.
 date_columns = df.columns[df.columns.str.contains("date")]
 df[date_columns] = df[date_columns].apply(pd.to_datetime)
 
-# 5. Alışveriş kanallarındaki müşteri sayısının, ortalama alınan ürün sayısının ve toplam harcamaların dağılımına bakınız.
+#Looking at the distribution of the number of customers, average number of products purchased and total expenses in shopping channels
 df.groupby("order_channel").agg({"master_id": "count",
                                  "total_order_num": "sum",
                                  "total_value": "sum"})
 
-# 6. En fazla kazancı getiren ilk 10 müşteriyi sıralayınız.
+#Top 10 customers with the most revenue
 df.sort_values("total_value", ascending=False).head(10)
 # df.sort_values("total_value",ascending=False)[:10]
 
-# 7. En fazla siparişi veren ilk 10 müşteriyi sıralayınız.
+#Top 10 customers with the most orders
 df.sort_values("total_order_num", ascending=False).head(10)
 
 
 # df.sort_values("total_order_num", ascending=False)[:10]
 
-# 8. Veri ön hazırlık sürecini fonksiyonlaştırınız.
+#Functionalized version of the data preparation process
 
 def data_prep(dataframe):
     dataframe["total_order_num"] = dataframe["order_num_total_ever_offline"] + dataframe["order_num_total_ever_online"]
@@ -119,7 +104,7 @@ def data_prep(dataframe):
     return order_channel_summary, top_10_total_value_customer, top_10_total_order_num_customer
 
 
-# GÖREV 2: RFM Metriklerinin Hesaplanması
+#Calculation of RFM Metrics
 
 df["last_order_date"].max()  # Timestamp('2021-05-30 00:00:00')
 
@@ -140,7 +125,7 @@ rfm["recency"] = (analysis_date - df["last_order_date"]).astype("timedelta64[D]"
 rfm["frequency"] = df["total_order_num"]
 rfm["monetary"] = df["total_value"]
 
-# GÖREV 3: RF ve RFM Skorlarının Hesaplanması
+#Calculation of RF and RFM Scores
 
 rfm["recency_score"] = pd.qcut(rfm["recency"], 5, [5, 4, 3, 2, 1])
 rfm["frequency_score"] = pd.qcut(rfm["frequency"].rank(method="first"), 5, [1, 2, 3, 4, 5])
@@ -150,8 +135,9 @@ rfm.head()
 
 rfm["rfm_score"] = rfm["recency_score"].astype(str) + rfm["frequency_score"].astype(str)
 
-# GÖREV 4: RF Skorlarının Segment Olarak Tanımlanması
+#Defining RF Scores as Segments
 
+#for refex version
 seg_map = {
     r'[1-2][1-2]': 'hibernating',
     r'[1-2][3-4]': 'at_risk',
@@ -164,6 +150,7 @@ seg_map = {
     r'[4-5][2-3]': 'potential_loyalists',
     r'5[4-5]': 'champions'}
 
+#if you dont want to use regex
 import re
 
 
@@ -191,30 +178,30 @@ def map_segment(segment):
     else:
         return 'unknown_segment'
 
-
+#for regex
 rfm["segment"] = rfm["rfm_score"].replace(seg_map, regex=True)
-rfm["segment"] = rfm["rfm_score"].apply(lambda x: map_segment(x) if pd.notnull(x) else x)
+
+#for the second way
+#rfm["segment"] = rfm["rfm_score"].apply(lambda x: map_segment(x) if pd.notnull(x) else x)
 rfm["segment"] = rfm["rfm_score"].apply(lambda x: map_segment(x))
 
 rfm[rfm["rfm_score"] == "31"].head()
 rfm[rfm["rfm_score"] == "55"][:12]
 
-# GÖREV 5: Aksiyon zamanı!
 
-
-# 1. Segmentlerin recency, frequnecy ve monetary ortalamalarını inceleyiniz.
+#Examining the recency, frequency and monetary averages of the segments
 rfm.describe().T
 
 rfm[["segment", "recency", "frequency", "monetary"]].groupby("segment").agg(["mean", "count"])
 
-# 2. RFM analizi yardımı ile 2 case için ilgili profildeki müşterileri bulun ve müşteri id'lerini csv ye kaydediniz.
-# a. FLO bünyesine yeni bir kadın ayakkabı markası dahil ediyor. Dahil ettiği markanın ürün fiyatları genel müşteri tercihlerinin üstünde. Bu nedenle markanın
-# tanıtımı ve ürün satışları için ilgilenecek profildeki müşterilerle özel olarak iletişime geçeilmek isteniliyor. Sadık müşterilerinden(champions,loyal_customers),
-# ortalama 250 TL üzeri ve kadın kategorisinden alışveriş yapan kişiler özel olarak iletişim kuralacak müşteriler. Bu müşterilerin id numaralarını csv dosyasına
-# yeni_marka_hedef_müşteri_id.cvs olarak kaydediniz.
-# b. Erkek ve Çoçuk ürünlerinde %40'a yakın indirim planlanmaktadır. Bu indirimle ilgili kategorilerle ilgilenen geçmişte iyi müşteri olan ama uzun süredir
-# alışveriş yapmayan kaybedilmemesi gereken müşteriler, uykuda olanlar ve yeni gelen müşteriler özel olarak hedef alınmak isteniliyor. Uygun profildeki müşterilerin id'lerini csv dosyasına indirim_hedef_müşteri_ids.csv
-# olarak kaydediniz.
+# 2. With the help of RFM analysis, find the customers in the relevant profile for 2 cases and save the customer IDs to CSV.
+# a. FLO is adding a new women's shoe brand. The product prices of the included brand are above general customer preferences. Therefore the brand
+#We want to be able to specifically contact customers with the profile that would be interested in # promotion and product sales. From your loyal customers(champions,loyal_customers),
+# Customers who shop above 250 TL on average and from the women's category will be contacted privately. Enter the ID numbers of these customers into the csv file.
+# Save as new_brand_target_customer_id.cvs.
+#b. Nearly 40% discount is planned for Men's and Children's products. Those who have been good customers in the past but have been for a long time are interested in categories related to this discount.
+# Customers who do not shop and should not be lost, those who are asleep and new customers are specifically targeted. Save the IDs of customers in the appropriate profile to the csv file discount_target_customer_ids.csv
+#Save it as #.
 
 print(rfm.columns)
 
@@ -226,7 +213,7 @@ df[(df["master_id"].isin(target_segment_cust_ids)) & (df["interested_in_categori
 cust_ids.to_csv("yeni_ayakkabı_hedef_müşteri_id.csv", index=False)
 
 
-# GÖREV 6: Tüm süreci fonksiyonlaştırınız.
+#Functionalization of the entire process
 
 def create_rfm(dataframe):
     # veriyi hazırlama
@@ -241,7 +228,7 @@ def create_rfm(dataframe):
     date_columns = df.columns[df.columns.str.contains("date")]
     df[date_columns] = df[date_columns].apply(pd.to.datetime)
 
-    # rfm metriklerinin hesaplanması
+    # calculation of rfm metrics
 
     analysis_date = dt.datetime(2021, 6, 1)
     rfm = pd.DataFrame()
@@ -250,14 +237,14 @@ def create_rfm(dataframe):
     rfm["frequency"] = dataframe["total_order_num"]
     rfm["monetary"] = dataframe["total_value"]
 
-    # Skorlarının Hesaplanması
+# Calculation of Scores
 
     rfm["recency_score"] = pd.qcut(rfm["recency"], 5, [5, 4, 3, 2, 1])
     rfm["frequency_score"] = pd.qcut(rfm["frequency"].rank(method="first"), 5, [1, 2, 3, 4, 5])
     rfm["monetary_score"] = pd.qcut(rfm["monetary"], 5, [1, 2, 3, 4, 5])
     rfm["rfm_score"] = rfm["recency_score"].astype(str) + rfm["frequency_score"].astype(str)
 
-    # segmentleme
+   # segmentation
 
     seg_map = {
         r'[1-2][1-2]': 'hibernating',
